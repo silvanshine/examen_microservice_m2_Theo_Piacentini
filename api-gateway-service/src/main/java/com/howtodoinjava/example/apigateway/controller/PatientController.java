@@ -23,13 +23,6 @@ public class PatientController {
 
     private static final String PATIENT_SERVICE_NAME = "patient-service";
 
-    // Create a LoadBalanced RestTemplate to interact with the Patient Service
-    @Bean
-    @LoadBalanced
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-
     // Helper method to fetch the service URL dynamically
     private String getPatientServiceUrl() {
         String serviceUrl = serviceDiscovery.getServiceUri(PATIENT_SERVICE_NAME);

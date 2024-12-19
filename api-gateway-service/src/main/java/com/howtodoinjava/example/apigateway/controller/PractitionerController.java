@@ -23,12 +23,6 @@ public class PractitionerController {
 
     private static final String PRACTITIONER_SERVICE_NAME = "practitioner-service";
 
-    // Create a LoadBalanced RestTemplate to interact with the Practitioner Service
-    @Bean
-    @LoadBalanced
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
 
     // Helper method to fetch the service URL dynamically
     private String getPractitionerServiceUrl() {

@@ -23,13 +23,6 @@ public class AppointmentController {
 
     private static final String APPOINTMENT_SERVICE_NAME = "appointment-service";
 
-    // Create a LoadBalanced RestTemplate to interact with the Appointment Service
-    @Bean
-    @LoadBalanced
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-
     // Helper method to fetch the service URL dynamically
     private String getAppointmentServiceUrl() {
         String serviceUrl = serviceDiscovery.getServiceUri(APPOINTMENT_SERVICE_NAME);
