@@ -59,21 +59,37 @@ docker run -d -p 8085:8085 eureka-server-service:latest
 Build image as above and push to your docker registry
 
 ```sh
+cd patient-service
 docker tag patient-service:latest <your-registry>/patient-service:latest
 docker push <your-registry>/patient-service:latest
 
+cd ..
+
+cd practitioner-service
 docker tag practitioner-service:latest <your-registry>/practitioner-service:latest
 docker push <your-registry>/practitioner-service:latest
 
+cd ..
+
+cd appointment-service
 docker tag appointment-service:latest <your-registry>/appointment-service:latest
 docker push <your-registry>/appointment-service:latest
 
+cd ..
+
+cd medical-record-service
 docker tag medical-record-service:latest <your-registry>/medical-record-service:latest
 docker push <your-registry>/medical-record-service:latest
 
+cd ..
+
+cd gateway-service
 docker tag gateway-service:latest <your-registry>/gateway-service:latest
 docker push <your-registry>/gateway-service:latest
 
+cd ..
+
+cd eureka-server-service
 docker tag eureka-server-service:latest <your-registry>/eureka-server-service:latest
 docker push <your-registry>/eureka-server-service:latest
 ```
@@ -89,4 +105,4 @@ kubectl apply -f gateway-service/deployment.yaml
 kubectl apply -f eureka-server-service/deployment.yaml
 ```
 
-an your good !
+and you're good !
