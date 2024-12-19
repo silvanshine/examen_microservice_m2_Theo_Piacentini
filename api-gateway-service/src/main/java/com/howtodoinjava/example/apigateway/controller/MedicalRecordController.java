@@ -26,13 +26,6 @@ public class MedicalRecordController {
     private static final String MEDICAL_RECORD_SERVICE_NAME = "medical-record-service";
 
 
-    // Create a LoadBalanced RestTemplate to interact with the Medical Record Service
-    @Bean
-    @LoadBalanced
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-
     // Helper method to fetch the service URL dynamically
     private String getMedicalRecordServiceUrl() {
         String serviceUrl = serviceDiscovery.getServiceUri(MEDICAL_RECORD_SERVICE_NAME);
