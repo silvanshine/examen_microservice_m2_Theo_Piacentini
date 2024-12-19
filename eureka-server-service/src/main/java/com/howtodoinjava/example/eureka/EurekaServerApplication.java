@@ -1,17 +1,14 @@
 package com.howtodoinjava.example.eureka;
 
-import de.codecentric.boot.admin.config.EnableAdminServer;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker;
-import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.netflix.eureka.server.EnableEurekaServer;
-import org.springframework.cloud.netflix.hystrix.EnableHystrix;
 
+import de.codecentric.boot.admin.config.EnableAdminServer;
 
 @SpringBootApplication
-@EnableCircuitBreaker
-@EnableHystrix
+@EnableEurekaServer
+@EnableAdminServer
 public class EurekaServerApplication {
 
     public static void main(String[] args) {

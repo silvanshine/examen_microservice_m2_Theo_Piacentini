@@ -9,7 +9,7 @@ with java 11 Jdk, open each service and run them in your favourite Java IDE
 - [swagger api practitioner service](http://localhost:8081/practitioner-service/swagger-ui.html#/practitioner-rest) on port 8081
 - [swagger api appointment service](http://localhost:8082/appointment-service/swagger-ui.html#/appointment-rest) on port 8082
 - [swagger api medical record service](http://localhost:8083/medical-record-service/swagger-ui.html#/medical-record-rest) on port 8083
-- [swagger api gateway service](http://localhost:8084/health) on port 8084
+- [health gateway service](http://localhost:8084/health) on port 8084
 - [admin eureka server service](http://localhost:8085/admin/#/) on port 8084
 
 # For local pre-production / tests
