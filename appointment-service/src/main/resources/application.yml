@@ -1,5 +1,6 @@
 server:
-  port: 8084    #port number
+  contextPath: /appointment-service
+  port: 8082
 
 eureka:
   instance:

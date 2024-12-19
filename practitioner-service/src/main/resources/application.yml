@@ -1,5 +1,6 @@
 server:
-  port: 8084    #port number
+  contextPath: /practitioner-service
+  port: 8081
 
 eureka:
   instance:

@@ -1,5 +1,6 @@
 server:
-  port: 8084    #port number
+  contextPath: /patient-service
+  port: 8080
 
 eureka:
   instance:
