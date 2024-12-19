@@ -15,6 +15,12 @@ public class Appointment {
     @ApiModelProperty(notes = "The unique ID of the appointment, auto-incremented")
     private int id;
 
+    @ApiModelProperty(notes = "The id of the associated patient")
+    private int patientId;
+
+    @ApiModelProperty(notes = "The id of the associated practitioner")
+    private int practitionerId;
+
     @ApiModelProperty(notes = "The date and time of the appointment")
     private LocalDateTime dateTime;
 
@@ -25,10 +31,13 @@ public class Appointment {
         // Default constructor
     }
 
-    public Appointment(LocalDateTime dateTime, String description) {
+    public Appointment(int patientId, int practitionerId, LocalDateTime dateTime, String description) {
         this.id = ++idCounter;
+        this.patientId = patientId;
+        this.practitionerId = practitionerId;
         this.dateTime = dateTime;
         this.description = description;
+
     }
 
     public int getId() {
@@ -55,10 +64,28 @@ public class Appointment {
         this.description = description;
     }
 
+    public int getPatientId() {
+        return patientId;
+    }
+
+    public void setPatientId(int patientId) {
+        this.patientId = patientId;
+    }
+
+    public int getPractitionerId() {
+        return practitionerId;
+    }
+
+    public void setPractitionerId(int practitionerId) {
+        this.practitionerId = practitionerId;
+    }
+
     @Override
     public String toString() {
         return "Appointment{" +
                 "id=" + id +
+                ", patientId=" + patientId +
+                ", practitionerId=" + practitionerId +
                 ", dateTime=" + dateTime +
                 ", description='" + description + '\'' +
                 '}';

@@ -22,7 +22,7 @@ public class MedicalRecord {
     @ApiModelProperty(notes = "The ID of the associated practitioner")
     private int practitionerId;
 
-    public MedicalRecord(String name, int patientId, int practitionerId) {
+    public MedicalRecord(int patientId, int practitionerId, String name) {
         this.id = ++idCounter;
         this.name = name;
         this.patientId = patientId;

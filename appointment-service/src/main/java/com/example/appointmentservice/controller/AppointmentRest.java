@@ -1,65 +1,67 @@
 package com.example.appointmentservice.controller;
 
 import com.example.appointmentservice.model.Appointment;
+import com.example.appointmentservice.service.ServiceDiscovery;
 import com.google.api.client.util.DateTime;
 import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Vector;
+import org.springframework.web.client.RestTemplate;
 
 @RestController
 @EnableSwagger2
 @Api(value = "Appointment", description = "CRUD for appoinments")
 public class AppointmentRest {
 
+    private static final String GATEWAY_SERVICE_NAME = "api-gateway";
+
+    @Autowired
+    private ServiceDiscovery serviceDiscovery;
+
+
     static private final Vector<Appointment> Appointments = new Vector<>();
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    // Create a LoadBalanced RestTemplate to interact with the Medical Record Service
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 
     static {
         // initialize Appointment list
-        Appointments.add(new Appointment(LocalDateTime.of(2024, 12, 25, 10, 30, 45), "appointment 1"));
-        Appointments.add(new Appointment(LocalDateTime.of(2024, 12, 25, 10, 30, 50), "appointment 2"));
+        Appointments.add(new Appointment(
+                1,
+                2,
+                LocalDateTime.of(2024, 12, 25, 10, 30, 45),
+                "appointment 1")
+        );
+        Appointments.add(new Appointment(
+                2,
+                2,
+                LocalDateTime.of(2024, 12, 25, 10, 30, 45),
+                "appointment 2")
+        );
     }
 
     private final String apiRoot = "/appointments";
-
-    @ApiOperation(value = "get Appointment by description", response = Appointment.class)
-    @RequestMapping(value = apiRoot + "/with-name/{description}", method = RequestMethod.GET)
-    @ApiResponses({
-            @ApiResponse(code = 200, message = "OK"),
-            @ApiResponse(code = 401, message = "not authorized"),
-            @ApiResponse(code = 403, message = "forbidden"),
-            @ApiResponse(code = 404, message = "not found")
-    })
-    @HystrixCommand(fallbackMethod = "getAppointmentByDescription_Fallback")
-    public ResponseEntity<List<Appointment>> getAppointmentByDescription(@PathVariable(value = "description") String description) {
-        Vector<Appointment> result = new Vector<>();
-
-        for (Appointment Appointment : Appointments) {
-            if (Appointment.getDescription().equals(description)) {
-                result.add(Appointment);
-            }
-        }
-
-        if (result.isEmpty()) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        return ResponseEntity.ok(result);
-    }
-
-    // Fallback method
-    public ResponseEntity<Appointment> getAppointmentByDescription_Fallback(@PathVariable(value = "name") String name) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-    }
 
     @ApiOperation(value = "Add a new Appointment", response = Appointment.class)
     @RequestMapping(value = apiRoot + "/", method = RequestMethod.POST)
@@ -68,8 +70,18 @@ public class AppointmentRest {
             @ApiResponse(code = 400, message = "Bad Request")
     })
     @HystrixCommand(fallbackMethod = "createAppointment_Fallback")
-    public ResponseEntity<Appointment> createAppointment(@RequestBody LocalDateTime datetime, @RequestBody String description) {
-        Appointment created_Appointment = new Appointment(datetime, description);
+    public ResponseEntity<Appointment> createAppointment(@RequestBody int patientId, @RequestBody int practitionerId, @RequestBody LocalDateTime datetime, @RequestBody String description) {
+
+        if (!doesPractitionerExist(practitionerId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Practitioner not found
+        }
+
+        if (!doesPatientExist(patientId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Patient not found
+        }
+        Appointment created_Appointment = new Appointment(patientId, practitionerId, datetime, description);
         Appointments.add(created_Appointment);
         return ResponseEntity.status(HttpStatus.CREATED).body(created_Appointment);
     }
@@ -128,10 +140,24 @@ public class AppointmentRest {
     })
     @HystrixCommand(fallbackMethod = "updateAppointment_Fallback")
     public ResponseEntity<Appointment> updateAppointment(@PathVariable("id") int id, @RequestBody Appointment updatedAppointment) {
+        if (!doesPractitionerExist(updatedAppointment.getPractitionerId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Practitioner not found
+        }
+
+        if (!doesPatientExist(updatedAppointment.getPatientId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Patient not found
+        }
+
         for (Appointment Appointment : Appointments) {
             if (Appointment.getId() == id) {
+
                 Appointment.setDateTime(updatedAppointment.getDateTime());
                 Appointment.setDescription(updatedAppointment.getDescription());
+                Appointment.setPatientId(updatedAppointment.getPatientId());
+                Appointment.setPractitionerId(updatedAppointment.getPractitionerId());
+
                 return ResponseEntity.ok(Appointment);
             }
         }
@@ -160,6 +186,34 @@ public class AppointmentRest {
     // Fallback method
     public ResponseEntity<Appointment> deleteAppointment_Fallback() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+    private boolean doesPractitionerExist(int practitionerId) {
+        String serviceUrl = serviceDiscovery.getServiceUri(GATEWAY_SERVICE_NAME);
+        if (serviceUrl == null) {
+            throw new RuntimeException("Service not found: " + GATEWAY_SERVICE_NAME);
+        }
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(
+                    serviceUrl + "/api/practitioner/" + practitionerId, String.class);
+            return response.getStatusCode() == HttpStatus.OK;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean doesPatientExist(int patientId) {
+        String serviceUrl = serviceDiscovery.getServiceUri(GATEWAY_SERVICE_NAME);
+        if (serviceUrl == null) {
+            throw new RuntimeException("Service not found: " + GATEWAY_SERVICE_NAME);
+        }
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(
+                    serviceUrl + "/api/patient/" + patientId, String.class);
+            return response.getStatusCode() == HttpStatus.OK;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }
