@@ -38,7 +38,6 @@ public class AppointmentRest {
     @Autowired
     private RestTemplate restTemplate;
 
-    // Create a LoadBalanced RestTemplate to interact with the Medical Record Service
     @Bean
     @LoadBalanced
     public RestTemplate restTemplate() {

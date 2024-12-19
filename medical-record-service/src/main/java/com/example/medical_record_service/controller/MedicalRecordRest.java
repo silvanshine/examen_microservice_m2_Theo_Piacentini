@@ -8,6 +8,8 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cloud.client.loadbalancer.LoadBalanced;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -25,6 +27,15 @@ import java.util.Vector;
 public class MedicalRecordRest {
 
     static private final Vector<MedicalRecord> medical_records = new Vector<>();
+
+    private static final String GATEWAY_SERVICE_NAME = "api-gateway";
+
+    @Bean
+    @LoadBalanced
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
+
 
     @Autowired
     private ServiceDiscovery serviceDiscovery;
@@ -80,25 +91,19 @@ public class MedicalRecordRest {
             @ApiResponse(code = 400, message = "Bad Request")
     })
     @HystrixCommand(fallbackMethod = "createPatient_Fallback")
-    public ResponseEntity<MedicalRecord> createPatient(@RequestBody int patientId, @RequestBody int practitionnerId, @RequestBody String name) {
-        String PatientServiceUrl = serviceDiscovery.getServiceUri(PATIENT_SERVICE_NAME);
-        if (PatientServiceUrl == null) {
-            throw new RuntimeException("Service not found: " + PATIENT_SERVICE_NAME);
+    public ResponseEntity<MedicalRecord> createPatient(@RequestBody int patientId, @RequestBody int practitionerId, @RequestBody String name) {
+
+        if (!doesPractitionerExist(practitionerId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Practitioner not found
         }
 
-        String PractitionerServiceUrl = serviceDiscovery.getServiceUri(PRACTITIONER_SERVICE_NAME);
-        if (PractitionerServiceUrl == null) {
-            throw new RuntimeException("Service not found: " + PRACTITIONER_SERVICE_NAME);
+        if (!doesPatientExist(patientId)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Patient not found
         }
 
-        Practitioner practitioner = restTemplate.exchange(
-            PractitionerServiceUrl + "/practitioners/" + practitionnerId,
-            HttpMethod.GET,
-            null,
-            new ParameterizedTypeReference<String>() {}).getBody();
-
-
-        MedicalRecord created_medicalRecord = new MedicalRecord(patientId, practitionnerId, name);
+        MedicalRecord created_medicalRecord = new MedicalRecord(patientId, practitionerId, name);
         medical_records.add(created_medicalRecord);
         return ResponseEntity.status(HttpStatus.CREATED).body(created_medicalRecord);
     }
@@ -157,9 +162,22 @@ public class MedicalRecordRest {
     })
     @HystrixCommand(fallbackMethod = "updatePatient_Fallback")
     public ResponseEntity<MedicalRecord> updatePatient(@PathVariable("id") int id, @RequestBody MedicalRecord updatedMedicalRecord) {
+        if (!doesPractitionerExist(updatedMedicalRecord.getPractitionerId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Practitioner not found
+        }
+
+        if (!doesPatientExist(updatedMedicalRecord.getPractitionerId())) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(null); // Patient not found
+        }
+
         for (MedicalRecord medicalRecord : medical_records) {
             if (medicalRecord.getId() == id) {
+
                 medicalRecord.setName(updatedMedicalRecord.getName());
+                medicalRecord.setPatientId(updatedMedicalRecord.getPatientId());
+                medicalRecord.setPractitionerId(updatedMedicalRecord.getPractitionerId());
                 return ResponseEntity.ok(medicalRecord);
             }
         }
@@ -188,6 +206,35 @@ public class MedicalRecordRest {
     // Fallback method
     public ResponseEntity<MedicalRecord> deletePatient_Fallback() {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+
+    private boolean doesPractitionerExist(int practitionerId) {
+        String serviceUrl = serviceDiscovery.getServiceUri(GATEWAY_SERVICE_NAME);
+        if (serviceUrl == null) {
+            throw new RuntimeException("Service not found: " + GATEWAY_SERVICE_NAME);
+        }
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(
+                    serviceUrl + "/api/practitioner/" + practitionerId, String.class);
+            return response.getStatusCode() == HttpStatus.OK;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean doesPatientExist(int patientId) {
+        String serviceUrl = serviceDiscovery.getServiceUri(GATEWAY_SERVICE_NAME);
+        if (serviceUrl == null) {
+            throw new RuntimeException("Service not found: " + GATEWAY_SERVICE_NAME);
+        }
+        try {
+            ResponseEntity<String> response = restTemplate.getForEntity(
+                    serviceUrl + "/api/patient/" + patientId, String.class);
+            return response.getStatusCode() == HttpStatus.OK;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
 }

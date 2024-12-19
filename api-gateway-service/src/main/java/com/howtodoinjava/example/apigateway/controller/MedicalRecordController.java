@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -22,6 +24,7 @@ public class MedicalRecordController {
     private ServiceDiscovery serviceDiscovery;
 
     private static final String MEDICAL_RECORD_SERVICE_NAME = "medical-record-service";
+
 
     // Create a LoadBalanced RestTemplate to interact with the Medical Record Service
     @Bean
@@ -104,4 +107,6 @@ public class MedicalRecordController {
     public String deleteMedicalRecord_fallback(String id) {
         return "Fallback: Unable to delete medical record with ID " + id;
     }
+
+
 }
