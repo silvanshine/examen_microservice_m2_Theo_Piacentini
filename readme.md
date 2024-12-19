@@ -10,7 +10,7 @@ with java 11 Jdk, open each service and run them in your favourite Java IDE
 - [swagger api appointment service](http://localhost:8082/appointment-service/swagger-ui.html#/appointment-rest) on port 8082
 - [swagger api medical record service](http://localhost:8083/medical-record-service/swagger-ui.html#/medical-record-rest) on port 8083
 - [health gateway service](http://localhost:8084/health) on port 8084
-- [admin eureka server service](http://localhost:8085/admin/#/) on port 8084
+- [admin eureka server service](http://localhost:8085/admin/#/) on port 8085
 
 # For local pre-production / tests
 
@@ -46,6 +46,8 @@ cd ..
 cd gateway-service
 docker build -t gateway-service:latest .
 docker run -d -p 8084:8084 gateway-service:latest
+
+cd ..
 
 cd eureka-server-service
 docker build -t eureka-server-service:latest .

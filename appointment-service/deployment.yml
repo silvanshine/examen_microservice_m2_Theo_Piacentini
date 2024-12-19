@@ -16,4 +16,4 @@ spec:
         - name: medical-record-service
           image: <registry>/<username>/medical-record-service:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 8082
