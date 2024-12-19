@@ -1,4 +1,4 @@
-package com.example.patientservice;
+package com.example.medical_record_service;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
